@@ -1,0 +1,40 @@
+# Core
+fastapi
+uvicorn
+python-multipart
+python-jose[cryptography]
+passlib[bcrypt]
+python-dotenv
+pip install 'pydantic[email]
+pbkdf2
+# Database
+pymongo
+motor
+
+# ML (will use pre-built wheels)
+scikit-learn
+xgboost
+joblib
+pandas
+numpy
+
+# NLP
+spacy
+PyPDF2
+python-docx
+
+# AI
+google-generativeai
+
+# Frontend
+streamlit
+streamlit-option-menu
+plotly
+
+# Encryption
+cryptography
+
+# Utilities
+requests
+Pillow
+reportlab
