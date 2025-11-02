@@ -237,6 +237,25 @@ def patient_registration_page():
     # Tab 4: Surgery & Treatment
     with tab4:
         st.subheader("Surgery & Treatment Information")
+        
+        # Define all surgery types
+        all_surgery_types = [
+            # Major Surgeries
+            "CABG", "Valve Replacement", "Valve Repair", "Aortic Valve Replacement", 
+            "Mitral Valve Replacement", "Bypass Surgery", "Heart Transplant", 
+            "Coronary Artery Bypass Graft", "Open Heart Surgery", "Aortic Aneurysm Repair", 
+            "LVAD Implantation",
+            # Intermediate Surgeries
+            "Angioplasty", "PCI", "Stent Placement", "Coronary Stenting", 
+            "Ablation", "Cardiac Ablation", "ASD Closure", "VSD Closure", 
+            "PDA Closure", "TAVI", "TAVR", "MitraClip",
+            # Minor Surgeries
+            "Pacemaker Implantation", "Pacemaker", "ICD Implantation", 
+            "Defibrillator Implantation", "CRT Device Implantation", 
+            "Cardiac Catheterization", "Diagnostic Catheterization", 
+            "Cardiac Monitoring Device", "Loop Recorder Implantation"
+        ]
+        
         col1, col2 = st.columns(2)
         
         with col1:
@@ -246,21 +265,13 @@ def patient_registration_page():
                 min_value=0, max_value=10, value=0
             )
             surgery_type = st.selectbox(
-                "Type of Surgery (Current/Planned)",
-                ["CABG", "Valve Replacement", "Bypass", "Pacemaker"],
-                help="Coronary Artery Bypass Grafting (CABG) or other"
+                "Type of Surgery (Current/Planned) *",
+                all_surgery_types,
+                help="Select the type of cardiac surgery"
             )
-            surgery_category = st.selectbox(
-                "Surgery Category",
-                ["Major", "Intermediate", "Minor"]
-            )
+            st.info("ℹ️ Surgery category and complexity will be automatically detected based on surgery type")
         
         with col2:
-            st.markdown("**Surgery Complexity**")
-            surgery_complexity = st.selectbox(
-                "Surgery Complexity",
-                ["Medium", "Low", "High"]
-            )
             surgery_duration_hours = st.number_input(
                 "Expected Surgery Duration (hours)",
                 min_value=0.5, max_value=12.0, value=4.0, step=0.5
@@ -269,6 +280,25 @@ def patient_registration_page():
             previous_surgeries = st.text_area(
                 "Previous Surgeries (one per line)",
                 help="List all previous surgeries"
+            )
+        
+        # Pre-surgery risk factors section
+        st.divider()
+        st.subheader("⚠️ Pre-Surgery Risk Factors")
+        st.markdown("Document any serious conditions or risk factors mentioned by doctor/patient before surgery")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            pre_surgery_notes = st.text_area(
+                "Pre-Surgery Notes",
+                help="Important risk factors, serious conditions, or concerns mentioned before surgery",
+                height=100
+            )
+        with col2:
+            other_risk_factors = st.text_area(
+                "Other Risk Factors (one per line)",
+                help="E.g., 'having diabetes', 'history of stroke', 'kidney disease'",
+                height=100
             )
     
     # Tab 5: Additional Information
@@ -332,8 +362,8 @@ def patient_registration_page():
                 # Surgery Details
                 "number_of_heart_surgeries": number_of_heart_surgeries,
                 "surgery_type": surgery_type,
-                "surgery_category": surgery_category,
-                "surgery_complexity": surgery_complexity,
+                "surgery_category": "Major",  # Will be auto-detected by backend
+                "surgery_complexity": "Medium",  # Will be auto-detected by backend
                 "surgery_duration_hours": surgery_duration_hours,
                 
                 # Additional Info (for encryption)
@@ -341,7 +371,11 @@ def patient_registration_page():
                 "chronic_conditions": chronic_conditions_list.split("\n") if chronic_conditions_list else [],
                 "medications": medications.split("\n") if medications else [],
                 "allergies": allergies.split("\n") if allergies else [],
-                "previous_surgeries": previous_surgeries.split("\n") if previous_surgeries else []
+                "previous_surgeries": previous_surgeries.split("\n") if previous_surgeries else [],
+                
+                # Pre-Surgery Risk Factors
+                "pre_surgery_notes": pre_surgery_notes,
+                "other_risk_factors": other_risk_factors.split("\n") if other_risk_factors else []
             }
             
             with st.spinner("Submitting registration..."):
@@ -398,7 +432,7 @@ def home_page():
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.metric("Accuracy", "94.5%", "ML Model Performance")
+        st.metric("Accuracy", "90%>", "ML Model Performance")
     with col2:
         st.metric("Response Time", "<2s", "Average API Response")
     with col3:
@@ -460,10 +494,45 @@ def risk_prediction_page():
             with st.expander("💊 Surgery Details", expanded=True):
                 col1, col2 = st.columns(2)
                 with col1:
-                    surgery_type = st.selectbox("Surgery Type *", ["CABG", "Valve Replacement", "Bypass", "Pacemaker"])
-                    surgery_category = st.selectbox("Surgery Category", ["Major", "Intermediate", "Minor"])
+                    surgery_types = [
+                        # Major Surgeries
+                        "CABG", "Valve Replacement", "Valve Repair", "Aortic Valve Replacement", 
+                        "Mitral Valve Replacement", "Bypass Surgery", "Heart Transplant", 
+                        "Coronary Artery Bypass Graft", "Open Heart Surgery", "Aortic Aneurysm Repair", 
+                        "LVAD Implantation",
+                        # Intermediate Surgeries
+                        "Angioplasty", "PCI", "Stent Placement", "Coronary Stenting", 
+                        "Ablation", "Cardiac Ablation", "ASD Closure", "VSD Closure", 
+                        "PDA Closure", "TAVI", "TAVR", "MitraClip",
+                        # Minor Surgeries
+                        "Pacemaker Implantation", "Pacemaker", "ICD Implantation", 
+                        "Defibrillator Implantation", "CRT Device Implantation", 
+                        "Cardiac Catheterization", "Diagnostic Catheterization", 
+                        "Cardiac Monitoring Device", "Loop Recorder Implantation"
+                    ]
+                    surgery_type = st.selectbox("Surgery Type *", surgery_types)
+                    st.info("ℹ️ Category & complexity are auto-detected based on surgery type")
                 with col2:
                     number_of_heart_surgeries = st.number_input("Previous Heart Surgeries", min_value=0, max_value=10, value=0)
+                    surgery_duration_hours = st.number_input("Expected Surgery Duration (hours)", min_value=0.5, max_value=12.0, value=4.0, step=0.5)
+            
+            with st.expander("⚠️ Pre-Surgery Risk Factors", expanded=False):
+                st.markdown("Document any serious conditions or risk factors mentioned before surgery")
+                col1, col2 = st.columns(2)
+                with col1:
+                    pre_surgery_notes = st.text_area(
+                        "Pre-Surgery Notes",
+                        help="Important risk factors, serious conditions, or concerns mentioned before surgery",
+                        height=100,
+                        placeholder="E.g., Patient has severe diabetes and recent MI"
+                    )
+                with col2:
+                    other_risk_factors_input = st.text_area(
+                        "Other Risk Factors (one per line)",
+                        help="E.g., 'having diabetes', 'history of stroke', 'kidney disease'",
+                        height=100,
+                        placeholder="having diabetes\nhistory of stroke\nkidney disease"
+                    )
         
         if st.button("Predict Risk"):
             data = {
@@ -504,8 +573,14 @@ def risk_prediction_page():
                     
                     # Surgery
                     "surgery_type": surgery_type,
-                    "surgery_category": surgery_category,
-                    "number_of_heart_surgeries": number_of_heart_surgeries
+                    "surgery_category": "Major",  # Will be auto-detected by backend
+                    "surgery_complexity": "Medium",  # Will be auto-detected by backend
+                    "surgery_duration_hours": surgery_duration_hours,
+                    "number_of_heart_surgeries": number_of_heart_surgeries,
+                    
+                    # Pre-Surgery Risk Factors
+                    "pre_surgery_notes": pre_surgery_notes,
+                    "other_risk_factors": other_risk_factors_input.split("\n") if other_risk_factors_input else []
                 }
             
             response = make_request("/api/predict-risk", "POST", data=data)
@@ -571,6 +646,29 @@ def risk_prediction_page():
                             st.progress(min(importance, 1.0))
                 else:
                     st.info("Feature importance analysis not available")
+                
+                # Display consequences analysis from Gemini
+                st.divider()
+                st.subheader("⚠️ Surgery Consequences & Recommendations")
+                st.markdown("**What happens if the patient undergoes surgery:**")
+                
+                consequences = result.get("consequences", "")
+                if consequences and consequences != "Consequence analysis unavailable.":
+                    st.markdown(consequences)
+                else:
+                    # Fallback if Gemini is unavailable
+                    st.info("💡 AI-powered consequence analysis is currently unavailable. Please consult with your surgeon for personalized guidance.")
+                    
+                    # Show basic consequence info based on risk level
+                    risk_level = result.get("risk_level", "Medium")
+                    if risk_level == "Low":
+                        st.success("✅ **Low Risk Surgery**: Generally favorable outcomes expected with proper post-operative care.")
+                    elif risk_level == "Medium":
+                        st.warning("⚠️ **Medium Risk Surgery**: Moderate complications possible. Close monitoring recommended during recovery.")
+                    elif risk_level == "High":
+                        st.error("🔴 **High Risk Surgery**: Significant complications possible. Intensive post-operative care required.")
+                    else:
+                        st.error("🛑 **Critical Risk Surgery**: Severe complications likely. Requires specialized care and extended monitoring.")
             else:
                 st.error("Prediction failed. Make sure models are trained.")
     
@@ -651,9 +749,38 @@ def risk_prediction_page():
                     else:
                         st.info("Feature importance analysis not available")
                     
+                    # Display consequences analysis from Gemini
+                    st.divider()
+                    st.subheader("⚠️ Surgery Consequences & Recommendations")
+                    consequences = result.get("consequences", "")
+                    if consequences and consequences != "Consequence analysis unavailable.":
+                        st.markdown(consequences)
+                    else:
+                        st.info("💡 AI-powered consequence analysis is currently unavailable. Please consult with your surgeon for personalized guidance.")
+                    
+                    # Show Gemini report analysis
+                    if result.get("gemini_success"):
+                        st.divider()
+                        st.subheader("🤖 AI Medical Report Analysis")
+                        with st.expander("📄 View Detailed Gemini Analysis", expanded=True):
+                            gemini_summary = result.get("gemini_summary", "Analysis unavailable")
+                            st.markdown(gemini_summary)
+                            
+                            # Show extracted risk factors if available
+                            if result.get("extracted_features", {}).get("other_risk_factors"):
+                                st.subheader("⚠️ Identified Risk Factors")
+                                risk_factors = result.get("extracted_features", {}).get("other_risk_factors", "")
+                                if isinstance(risk_factors, str) and risk_factors:
+                                    factors_list = risk_factors.split("|")
+                                    for factor in factors_list:
+                                        st.markdown(f"- ⚠️ {factor}")
+                                elif isinstance(risk_factors, list):
+                                    for factor in risk_factors:
+                                        st.markdown(f"- ⚠️ {factor}")
+                    
                     # Show extracted features in expandable section
                     st.divider()
-                    with st.expander("📝 View Extracted Features & Report Text"):
+                    with st.expander("📝 View All Extracted Features & Report Text"):
                         st.subheader("Extracted Features")
                         extracted = result.get("extracted_features", {})
                         
@@ -695,6 +822,31 @@ def risk_prediction_page():
                                 "Affected_by_Covid": extracted.get("Affected_by_Covid"),
                                 "smoking": extracted.get("smoking")
                             })
+                        
+                        # Surgery details
+                        st.subheader("🏥 Surgery Details")
+                        st.json({
+                            "surgery_type": extracted.get("surgery_type"),
+                            "surgery_category": extracted.get("surgery_category"),
+                            "surgery_complexity": extracted.get("surgery_complexity"),
+                            "number_of_heart_surgeries": extracted.get("number_of_heart_surgeries")
+                        })
+                        
+                        # Pre-surgery risk factors
+                        if extracted.get("pre_surgery_notes") or extracted.get("other_risk_factors"):
+                            st.subheader("⚠️ Pre-Surgery Risk Factors")
+                            if extracted.get("pre_surgery_notes"):
+                                st.text_area("Pre-Surgery Notes:", extracted.get("pre_surgery_notes"), height=100, disabled=True)
+                            if extracted.get("other_risk_factors"):
+                                st.write("**Other Risk Factors:**")
+                                risk_factors = extracted.get("other_risk_factors")
+                                if isinstance(risk_factors, str):
+                                    for factor in risk_factors.split("|"):
+                                        if factor:
+                                            st.markdown(f"- {factor}")
+                                elif isinstance(risk_factors, list):
+                                    for factor in risk_factors:
+                                        st.markdown(f"- {factor}")
                         
                         st.subheader("Report Preview")
                         st.text_area("First 500 characters:", result.get("extracted_text", ""), height=150, disabled=True)
@@ -830,8 +982,13 @@ def profile_page():
                 st.metric("Surgery Type", profile.get('surgery_type', 'N/A'))
                 st.metric("Surgery Category", profile.get('surgery_category', 'N/A'))
             with col2:
-                st.metric("Surgery Complexity", profile.get('surgery_complexity', 'N/A'))
+                st.metric("Surgery Complexity", profile.get('surgery_complexity', 'N/A') + " (Auto-detected)")
                 st.metric("Expected Duration (hrs)", profile.get('surgery_duration_hours', 'N/A'))
+            
+            # Display pre-surgery notes if available
+            if profile.get('pre_surgery_notes'):
+                st.subheader("Pre-Surgery Risk Factors")
+                st.text_area("Notes from doctor/patient", profile.get('pre_surgery_notes', ''), disabled=True, height=100)
         
         with tab5:
             st.subheader("Medications")
@@ -914,28 +1071,51 @@ def profile_page():
                 exercise_frequency = st.selectbox("Exercise", ["Regular", "Rare", "None"],
                     index=["Regular", "Rare", "None"].index(profile.get('exercise_frequency', 'Regular')))
             medical_history = st.text_area("Medical History", value=profile.get('medical_history', ''))
-            chronic_conditions_list = st.text_area("Chronic Conditions", value='\n'.join(profile.get('chronic_conditions', [])))
+            chronic_conditions = profile.get('chronic_conditions', [])
+            if isinstance(chronic_conditions, str):
+                chronic_conditions_list = st.text_area("Chronic Conditions", value=chronic_conditions)
+            else:
+                chronic_conditions_list = st.text_area("Chronic Conditions", value='\n'.join(chronic_conditions) if chronic_conditions else '')
         
         with tab4:
             col1, col2 = st.columns(2)
             with col1:
                 number_of_heart_surgeries = st.number_input("Previous Surgeries", value=profile.get('number_of_heart_surgeries', 0))
-                surgery_type = st.selectbox("Surgery Type", ["CABG", "Valve Replacement", "Bypass", "Pacemaker"],
-                    index=["CABG", "Valve Replacement", "Bypass", "Pacemaker"].index(profile.get('surgery_type', 'CABG')))
-                surgery_category = st.selectbox("Category", ["Major", "Intermediate", "Minor"],
-                    index=["Major", "Intermediate", "Minor"].index(profile.get('surgery_category', 'Major')))
+                surgery_type = st.selectbox("Surgery Type *", ["CABG", "Valve Replacement", "Bypass", "Pacemaker", "Angioplasty", "Stent Placement", "Ablation"],
+                    index=["CABG", "Valve Replacement", "Bypass", "Pacemaker", "Angioplasty", "Stent Placement", "Ablation"].index(profile.get('surgery_type', 'CABG')) if profile.get('surgery_type') in ["CABG", "Valve Replacement", "Bypass", "Pacemaker", "Angioplasty", "Stent Placement", "Ablation"] else 0)
+                st.info("ℹ️ Surgery category and complexity will be auto-detected based on surgery type")
             with col2:
-                surgery_complexity = st.selectbox("Complexity", ["Medium", "Low", "High"],
-                    index=["Medium", "Low", "High"].index(profile.get('surgery_complexity', 'Medium')))
                 surgery_duration_hours = st.number_input("Duration (hrs)", value=float(profile.get('surgery_duration_hours', 4.0)))
-                previous_surgeries = st.text_area("Previous Surgeries List", value='\n'.join(profile.get('previous_surgeries', [])))
+                prev_surgeries = profile.get('previous_surgeries', [])
+                previous_surgeries = st.text_area("Previous Surgeries List", 
+                    value='\n'.join(prev_surgeries) if isinstance(prev_surgeries, list) else str(prev_surgeries or ''))
+            
+            # Pre-surgery risk factors
+            st.subheader("Pre-Surgery Risk Factors")
+            pre_surgery_notes = st.text_area(
+                "Important risk factors mentioned by doctor/patient before surgery",
+                value=profile.get('pre_surgery_notes', ''),
+                height=100,
+                help="Document any serious conditions or concerns mentioned before surgery"
+            )
+            other_risk_factors_list = profile.get('other_risk_factors', [])
+            other_risk_factors = st.text_area(
+                "Other Risk Factors (one per line)",
+                value='\n'.join(other_risk_factors_list) if isinstance(other_risk_factors_list, list) else str(other_risk_factors_list or ''),
+                height=80,
+                help="E.g., 'having diabetes', 'history of stroke', 'kidney disease'"
+            )
         
         with tab5:
             col1, col2 = st.columns(2)
             with col1:
-                medications = st.text_area("Medications", value='\n'.join(profile.get('medications', [])))
+                meds = profile.get('medications', [])
+                medications = st.text_area("Medications", 
+                    value='\n'.join(meds) if isinstance(meds, list) else str(meds or ''))
             with col2:
-                allergies = st.text_area("Allergies", value='\n'.join(profile.get('allergies', [])))
+                allergy_list = profile.get('allergies', [])
+                allergies = st.text_area("Allergies", 
+                    value='\n'.join(allergy_list) if isinstance(allergy_list, list) else str(allergy_list or ''))
         
         # Save button
         st.divider()
@@ -963,14 +1143,16 @@ def profile_page():
                     "exercise_frequency": exercise_frequency,
                     "number_of_heart_surgeries": number_of_heart_surgeries,
                     "surgery_type": surgery_type,
-                    "surgery_category": surgery_category,
-                    "surgery_complexity": surgery_complexity,
+                    "surgery_category": "Major",  # Will be auto-detected by backend
+                    "surgery_complexity": "Medium",  # Will be auto-detected by backend
                     "surgery_duration_hours": surgery_duration_hours,
                     "medical_history": medical_history,
                     "chronic_conditions": chronic_conditions_list.split("\n") if chronic_conditions_list else [],
                     "medications": medications.split("\n") if medications else [],
                     "allergies": allergies.split("\n") if allergies else [],
-                    "previous_surgeries": previous_surgeries.split("\n") if previous_surgeries else []
+                    "previous_surgeries": previous_surgeries.split("\n") if previous_surgeries else [],
+                    "pre_surgery_notes": pre_surgery_notes,
+                    "other_risk_factors": other_risk_factors.split("\n") if other_risk_factors else []
                 }
                 
                 with st.spinner("Saving changes..."):
@@ -991,7 +1173,7 @@ def scan_interpretation_page():
     
     uploaded_file = st.file_uploader(
         "Choose a file", 
-        type=["pdf", "jpg", "jpeg", "png"]
+        type=["pdf", "jpg", "jpeg", "png", "webp", "bmp", "tiff", "tif", "gif"]
     )
     
     if uploaded_file:
@@ -1000,14 +1182,20 @@ def scan_interpretation_page():
             st.write("📄 PDF uploaded")
         else:
             image = Image.open(uploaded_file)
-            st.image(image, caption="Uploaded Scan", use_column_width=True)
+            st.image(image, caption="Uploaded Scan", use_container_width=True)
         
         if st.button("Interpret Scan"):
             with st.spinner("Analyzing scan..."):
+                # Reset file pointer to beginning
+                uploaded_file.seek(0)
+                
+                # Prepare file for upload
+                files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
+                
                 response = make_request(
                     "/api/interpret-scan", 
                     "POST", 
-                    files={"file": uploaded_file}
+                    files=files
                 )
                 
                 if response and response.status_code == 200:

@@ -3,9 +3,10 @@ fastapi
 uvicorn
 python-multipart
 python-jose[cryptography]
-passlib[bcrypt]
+passlib==1.7.4
+bcrypt==4.0.1
 python-dotenv
-pip install 'pydantic[email]
+pydantic[email]
 pbkdf2
 # Database
 pymongo
@@ -17,6 +18,7 @@ xgboost
 joblib
 pandas
 numpy
+shap
 
 # NLP
 spacy

@@ -50,12 +50,24 @@ async def interpret_scan(
     file: UploadFile = File(...),
     current_user: str = Depends(get_current_user)
 ):
-    file_content = await file.read()
-    
     try:
+        logger.info(f"Scan interpretation requested by {current_user}")
+        logger.info(f"File: {file.filename}, Type: {file.content_type}")
+        
+        file_content = await file.read()
+        logger.info(f"File size: {len(file_content)} bytes")
+        
+        # Check if file is empty
+        if not file_content or len(file_content) == 0:
+            raise HTTPException(status_code=400, detail="Uploaded file is empty")
+        
+        # Log first few bytes to identify file type
+        logger.info(f"File magic bytes: {file_content[:20].hex() if len(file_content) >= 20 else file_content.hex()}")
+        
         # Check if PDF or image
         if file.filename.lower().endswith('.pdf'):
             # Extract images from PDF
+            logger.info("Processing PDF file...")
             pdf_reader = PdfReader(io.BytesIO(file_content))
             
             # Extract text from PDF
@@ -63,8 +75,20 @@ async def interpret_scan(
             for page in pdf_reader.pages:
                 text += page.extract_text()
             
+            logger.info(f"Extracted {len(text)} characters from PDF")
+            
+            if not text.strip():
+                logger.warning("No text extracted from PDF")
+                return {
+                    "interpretation": "⚠️ Unable to extract text from this PDF. The file may be image-based or encrypted. Please try uploading a text-based PDF or an image file.",
+                    "filename": file.filename,
+                    "file_type": "pdf"
+                }
+            
             # Use Gemini to interpret the scan report text
+            logger.info("Initializing Gemini model...")
             model = get_gemini_model()
+            logger.info("Gemini model initialized successfully")
             
             prompt = f"""You are a kind doctor explaining medical test results to a patient who doesn't understand medical terms.
 
@@ -87,15 +111,46 @@ Please explain:
 
 Remember: Talk like a caring family doctor, not a medical textbook! Use "you" and "your" to make it personal."""
             
+            logger.info("Sending request to Gemini...")
             response = model.generate_content(prompt)
             interpretation = response.text
+            logger.info("Gemini response received successfully")
             
         else:
             # For image files
-            image = Image.open(io.BytesIO(file_content))
+            logger.info("Processing image file...")
+            
+            try:
+                # Create BytesIO object and ensure it's at the start
+                image_buffer = io.BytesIO(file_content)
+                image_buffer.seek(0)
+                
+                # Try to open the image
+                image = Image.open(image_buffer)
+                logger.info(f"Image opened: {image.size}, Mode: {image.mode}")
+                
+                # Load the image data
+                image.load()
+                
+                # Convert to RGB if necessary (Gemini works best with RGB)
+                if image.mode not in ('RGB', 'L'):
+                    logger.info(f"Converting image from {image.mode} to RGB")
+                    image = image.convert('RGB')
+                
+            except Exception as img_error:
+                logger.error(f"Failed to open image: {str(img_error)}")
+                logger.error(f"File content type: {file.content_type}")
+                logger.error(f"File extension: {file.filename.split('.')[-1] if '.' in file.filename else 'none'}")
+                
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Unable to process image file '{file.filename}'. The file may be corrupted or in an unsupported format. Please try: 1) Converting to JPG or PNG first, 2) Re-downloading the image, or 3) Using a different file. Error: {str(img_error)}"
+                )
             
             # Use Gemini Vision for image analysis
+            logger.info("Initializing Gemini model for vision...")
             model = get_gemini_model()
+            logger.info("Gemini vision model initialized successfully")
             
             prompt = """You are a kind doctor showing a patient their scan results. Explain what you see in very simple words.
 
@@ -119,9 +174,12 @@ Please tell the patient:
 
 Talk directly to the patient using "you" and "your". Be warm and caring, like talking to a family member."""
             
+            logger.info("Sending image to Gemini...")
             response = model.generate_content([prompt, image])
             interpretation = response.text
+            logger.info("Gemini vision response received successfully")
         
+        logger.info("Scan interpretation completed successfully")
         return {
             "interpretation": interpretation,
             "filename": file.filename,
@@ -129,4 +187,5 @@ Talk directly to the patient using "you" and "your". Be warm and caring, like ta
         }
         
     except Exception as e:
+        logger.error(f"Error in scan interpretation: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error interpreting scan: {str(e)}")

@@ -12,25 +12,33 @@ from utils.encryption import DataEncryption
 
 router = APIRouter()
 
-# Initialize chatbot with error handling
+# Initialize chatbot with error handling (lazy loading)
 import logging
 logger = logging.getLogger(__name__)
 
-try:
-    chatbot = RAGChatbot()
-    logger.info("✅ Chatbot initialized successfully")
-except Exception as e:
-    logger.error(f"❌ Failed to initialize chatbot: {str(e)}")
-    chatbot = None
-
+chatbot = None
 encryption = DataEncryption()
+
+def get_chatbot():
+    """Lazy load chatbot only when needed"""
+    global chatbot
+    if chatbot is None:
+        try:
+            logger.info("Initializing chatbot...")
+            chatbot = RAGChatbot()
+            logger.info("✅ Chatbot initialized successfully")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize chatbot: {str(e)}")
+            return None
+    return chatbot
 
 @router.post("/chat")
 async def chat(
     message: ChatMessage,
     current_user: str = Depends(get_current_user)
 ):
-    # Check if chatbot is available
+    # Lazy load chatbot
+    chatbot = get_chatbot()
     if chatbot is None:
         return {
             "response": "⚠️ AI service is currently unavailable. Please contact the administrator.",

@@ -32,6 +32,10 @@ class PatientRegistration(BaseModel):
     allergies: Optional[List[str]] = []
     previous_surgeries: Optional[List[str]] = []
     
+    # Pre-Surgery Risk Factors (serious conditions mentioned by doctor/patient)
+    pre_surgery_notes: Optional[str] = None  # Encrypted - serious conditions/risk factors before surgery
+    other_risk_factors: Optional[List[str]] = []  # List of risk factors like "having diabetes", "history of stroke"
+    
     # Lifestyle Factors
     smoking: Optional[str] = "No"  # Yes, No
     smoking_history: Optional[str] = "Never"  # Never, Former, Current
@@ -62,8 +66,8 @@ class PatientRegistration(BaseModel):
     # Surgery Details
     number_of_heart_surgeries: Optional[int] = 0
     surgery_type: Optional[str] = "CABG"  # CABG, Valve Replacement, Bypass, Pacemaker
-    surgery_category: Optional[str] = "Major"  # Major, Intermediate, Minor
-    surgery_complexity: Optional[str] = "Medium"  # Low, Medium, High
+    surgery_category: Optional[str] = "Major"  # Major, Intermediate, Minor (auto-detected from surgery_type)
+    surgery_complexity: Optional[str] = "Medium"  # Low, Medium, High (auto-detected from surgery_type)
     surgery_duration_hours: Optional[float] = 4.0
 
 class PredictionRequest(BaseModel):

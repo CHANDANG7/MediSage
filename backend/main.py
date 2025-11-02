@@ -17,9 +17,9 @@ from backend.models import *
 from backend.auth import *
 from backend.database import users_collection, patients_collection, chat_sessions_collection
 from utils.encryption import DataEncryption
-from routes.prediction import router as prediction_router
-from routes.chatbot import router as chatbot_router
-from routes.scan import router as scan_router
+from backend.routes.prediction import router as prediction_router
+from backend.routes.chatbot import router as chatbot_router
+from backend.routes.scan import router as scan_router
 
 app = FastAPI(title="MediSage AI API", version="1.0.0")
 
@@ -146,14 +146,14 @@ async def patient_registration(
     # Define all sensitive fields to encrypt (PII + Medical)
     sensitive_fields = [
         # Personal Identifiable Information
-        "contact_number",
-        
-        # Medical Data
+        "contact_number"
         "medical_history",
         "chronic_conditions", 
         "medications", 
         "allergies",
-        "previous_surgeries"
+        "previous_surgeries",
+        "pre_surgery_notes",
+        "other_risk_factors" 
     ]
     
     # Encrypt all sensitive fields
@@ -199,7 +199,9 @@ async def get_patient_profile(current_user: str = Depends(get_current_user)):
         "chronic_conditions", 
         "medications", 
         "allergies",
-        "previous_surgeries"
+        "previous_surgeries",
+        "pre_surgery_notes",
+        "other_risk_factors"
     ]
     
     for field in sensitive_fields:
@@ -229,9 +231,15 @@ async def update_patient_profile(
     if not existing_patient:
         raise HTTPException(status_code=404, detail="Patient profile not found")
     
-    # Prepare update data
     patient_dict = patient_data.dict()
     patient_dict["updated_at"] = datetime.utcnow()
+    
+    # Auto-detect surgery category and complexity based on surgery type
+    from backend.routes.prediction import auto_detect_surgery_complexity
+    surgery_type = patient_dict.get("surgery_type", "CABG")
+    category, complexity = auto_detect_surgery_complexity(surgery_type)
+    patient_dict["surgery_category"] = category
+    patient_dict["surgery_complexity"] = complexity
     
     # Define all sensitive fields to encrypt
     sensitive_fields = [
@@ -240,7 +248,9 @@ async def update_patient_profile(
         "chronic_conditions", 
         "medications", 
         "allergies",
-        "previous_surgeries"
+        "previous_surgeries",
+        "pre_surgery_notes",
+        "other_risk_factors"
     ]
     
     # Encrypt all sensitive fields
