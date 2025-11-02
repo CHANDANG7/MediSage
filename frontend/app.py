@@ -15,7 +15,10 @@ from io import BytesIO
 from datetime import datetime
 
 import os
+# Use empty string for production (same origin via nginx), localhost for development
 API_URL = os.getenv("API_URL", "http://localhost:8000")
+if API_URL == "production":
+    API_URL = ""  # Same origin - nginx will route
 
 # Page config
 st.set_page_config(page_title="MediSage AI", page_icon="🏥", layout="wide")
