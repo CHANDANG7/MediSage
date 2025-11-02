@@ -14,8 +14,8 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from io import BytesIO
 from datetime import datetime
 
-# API Configuration
-API_URL = "http://localhost:8000"
+import os
+API_URL = os.getenv("API_URL", "http://localhost:8000")
 
 # Page config
 st.set_page_config(page_title="MediSage AI", page_icon="🏥", layout="wide")

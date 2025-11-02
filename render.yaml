@@ -1,0 +1,31 @@
+services:
+  # Backend Service
+  - type: web
+    name: medisage-backend
+    env: docker
+    dockerfilePath: ./Dockerfile.backend
+    plan: free
+    envVars:
+      - key: MONGODB_URI
+        value: mongodb+srv://Admin:admin%40MediSage@msp.w5nweki.mongodb.net/?retryWrites=true&w=majority&appName=MSP
+      - key: DATABASE_NAME
+        value: medisage_db
+      - key: SECRET_KEY
+        value: MediSageAI_Secrete_Key
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 30
+      - key: GEMINI_API_KEY
+        value: AIzaSyDi-7IbEaL4T9mZ2v0DXh9rCg7L0ueDr-U
+    healthCheckPath: /
+    
+  # Frontend Service  
+  - type: web
+    name: medisage-frontend
+    env: docker
+    dockerfilePath: ./Dockerfile.frontend
+    plan: free
+    envVars:
+      - key: API_URL
+        value: https://medisage-backend.onrender.com
