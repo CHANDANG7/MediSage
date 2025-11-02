@@ -240,6 +240,9 @@ Based on your {risk_level} risk level (score: {risk_score}/100):
     
     risk_factors_text = "\n".join([f"- {risk}" for risk in specific_risks]) if specific_risks else "- No major risk factors identified"
     
+    # Prepare report section separately to avoid f-string backslash issue
+    report_section = f"**FROM THEIR MEDICAL REPORT**:\n{report_summary}" if report_summary else ""
+    
     prompt = f"""You are a cardiac surgeon giving DIRECT, SPECIFIC advice to this patient about their surgery even after they got to know what is the percentage of level of risk the surgery involves.
 
 **PATIENT'S ACTUAL SITUATION**:
@@ -254,7 +257,7 @@ Based on your {risk_level} risk level (score: {risk_score}/100):
 **THEIR MEDICAL CONDITIONS**:
 {patient_info}
 
-{f'**FROM THEIR MEDICAL REPORT**:\n{report_summary}' if report_summary else ''}
+{report_section}
 
 **YOUR TASK**: Give DIRECT, SPECIFIC consequences for THIS patient. Be concrete and personalized.
 
